@@ -15,8 +15,10 @@ def read_date(image_path):
     with open(image_path, 'rb') as file:
         tags = exifread.process_file(file)
         try:
+            # return Image Taken Time
             return str(tags["EXIF DateTimeOriginal"])
         except KeyError:
+            # if cant find Image Taken Time - I belive this only occurs when file is not a photo
             return None
 
 
@@ -24,7 +26,9 @@ def move(old_path, new_path, file_name):
     try:
         os.rename(old_path + os.sep + file_name, new_path + os.sep + file_name)
     except FileNotFoundError:
+        # if directory doesnt exist - create directory and start again
         os.makedirs(new_path)
+        move(old_path, new_path, file_name)
 
 
 def move_to_output(image_path, date_taken):
@@ -42,12 +46,12 @@ def move_to_output(image_path, date_taken):
 def move_to_trash(file_path):
     old_path, file_name = os.path.split(file_path)
 
-    new_path = trash_path
-    move(old_path, new_path, file_name)
+    move(old_path, trash_path, file_name)
 
 
 def save_log(message):
     log_file_path = log_path + os.sep + "photo_organizer.log"
+    # open with cursor in after last line
     with open(log_file_path, 'a') as log_file:
         log_file.write(str(datetime.datetime.now()) + ": " + message + "\n")
 
@@ -55,6 +59,7 @@ def save_log(message):
 def create_lock():
     lock_file_path = input_path + os.sep + "photo_organizer.lock"
     try:
+        # open for exclusive
         with open(lock_file_path, 'x') as lock_file:
             lock_file.write(str(datetime.datetime.now))
         save_log("Created lock")
