@@ -49,7 +49,7 @@ def save_log(message):
     home = str(Path.home())
     log_file_path = home + os.sep + "photo_organizer.log"
     with open(log_file_path, 'a') as log_file:
-        log_file.write(str(datetime.datetime.now()) + ": " + message+"\n")
+        log_file.write(str(datetime.datetime.now()) + ": " + message + "\n")
 
 
 def create_lock():
@@ -64,12 +64,19 @@ def create_lock():
 
 
 if __name__ == '__main__':
-    create_lock()
+    # TODO get arguments and assign them
 
+    create_lock()
+    trashed = 0
+    moved = 0
     for path in Path(input_path).rglob('*.*'):
         path = str(path)
         date_taken = read_date(path)
         if date_taken is not None:
             move_to_output(path, date_taken)
+            moved += 1
         else:
             move_to_trash(path)
+            trashed += 1
+    # TODO execute after_command
+    # TODO delete lock
