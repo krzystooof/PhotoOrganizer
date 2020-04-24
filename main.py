@@ -8,6 +8,7 @@ input_path = ""
 output_path = ""
 trash_path = ""
 after_command = ""
+log_path = str(Path.home())
 
 
 def read_date(image_path):
@@ -46,8 +47,7 @@ def move_to_trash(file_path):
 
 
 def save_log(message):
-    home = str(Path.home())
-    log_file_path = home + os.sep + "photo_organizer.log"
+    log_file_path = log_path + os.sep + "photo_organizer.log"
     with open(log_file_path, 'a') as log_file:
         log_file.write(str(datetime.datetime.now()) + ": " + message + "\n")
 
