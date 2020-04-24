@@ -79,4 +79,5 @@ if __name__ == '__main__':
             move_to_trash(path)
             trashed += 1
     # TODO execute after_command
+    # TODO send logs
     # TODO delete lock
