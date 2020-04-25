@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -8,25 +9,44 @@ import datetime
 
 input_path = ""
 output_path = ""
-trash_path = ""
 after_command = ""
 log_path = str(Path.home())
 
 
+# TODO add HEIC metadata extraction
+
+
 def read_date(image_path):
-    with open(image_path, 'rb') as file:
-        tags = exifread.process_file(file)
-        try:
-            # return Image Taken Time
-            return str(tags["EXIF DateTimeOriginal"])
-        except KeyError:
-            # if cant find Image Taken Time - I belive this only occurs when file is not a photo
-            return None
+    try:
+        with open(image_path, 'rb') as file:
+            tags = exifread.process_file(file)
+            try:
+                # return Image Taken Time
+                return str(tags["EXIF DateTimeOriginal"])
+            except KeyError:
+                # if cant find Image Taken Time
+                return None
+    except IsADirectoryError:
+        return None
+
+
+def check_file_exist(path, file_name):
+    if os.path.isfile(path + os.sep + file_name):
+        return True
+    else:
+        return False
 
 
 def move(old_path, new_path, file_name):
+    # do not overwrite - check if file exist
+    output_file_name = file_name
+    while check_file_exist(new_path, output_file_name):
+        extension = os.path.splitext(output_file_name)[1]
+        name = os.path.splitext(output_file_name)[0]
+        name += "n"
+        output_file_name = name + extension
     try:
-        os.rename(old_path + os.sep + file_name, new_path + os.sep + file_name)
+        shutil.move(old_path + os.sep + file_name, new_path + os.sep + output_file_name)
     except FileNotFoundError:
         # if directory doesnt exist - create directory and start again
         os.makedirs(new_path)
@@ -45,10 +65,10 @@ def move_to_output(image_path, date_taken):
     move(old_path, new_path, file_name)
 
 
-def move_to_trash(file_path):
+def move_to(file_path, new_path):
     old_path, file_name = os.path.split(file_path)
 
-    move(old_path, trash_path, file_name)
+    move(old_path, new_path, file_name)
 
 
 def save_log(message):
@@ -66,7 +86,8 @@ def create_lock():
             lock_file.write(str(datetime.datetime.now))
         save_log("Created lock")
     except FileExistsError:
-        save_log("Output file locked - another process in progress")
+        print("Directory locked - another process in progress")
+        save_log("Directory locked - another process in progress")
         quit(1)
 
 
@@ -92,31 +113,87 @@ def get_arguments(argvs):
         quit(2)
 
 
+def get_file_extension(path, letters):
+    extension = str(path[-(letters):]).lower()
+    return str(extension)
+
+
 if __name__ == '__main__':
     input_path, output_path, after_command = get_arguments(sys.argv)
 
-    create_lock(input_path)
-    trashed = 0
+    create_lock()
+
     moved = 0
+
     for path in Path(input_path).rglob('*.*'):
         path = str(path)
-        date_taken = read_date(path)
-        if date_taken is not None:
-            move_to_output(path, date_taken)
-            moved += 1
-        else:
-            move_to_trash(path)
-            trashed += 1
+        extension = get_file_extension(path, 4)
+        if extension != 'lock':
+            date_taken = read_date(path)
+            print(path + ": " + str(date_taken))
+            if date_taken is not None:
+                move_to_output(path, date_taken)
+                moved += 1
+            else:
+                videos_path = output_path + os.sep + "videos"
+                no_time_data_path = output_path + os.sep + "no_time"
+
+                # photos
+                if get_file_extension(path, 3) == 'png':
+                    move_to(path, no_time_data_path)
+                    moved += 1
+                elif get_file_extension(path, 3) == 'jpg':
+                    move_to(path, no_time_data_path)
+                    moved += 1
+                elif get_file_extension(path, 3) == 'gif':
+                    move_to(path, no_time_data_path)
+                    moved += 1
+                elif get_file_extension(path, 4) == 'jpeg':
+                    move_to(path, no_time_data_path)
+                    moved += 1
+                elif get_file_extension(path, 4) == 'heif':
+                    move_to(path, no_time_data_path)
+                    moved += 1
+                elif get_file_extension(path, 4) == 'heic':
+                    move_to(path, no_time_data_path)
+                    moved += 1
+                # videos
+                elif get_file_extension(path, 3) == 'mov':
+                    move_to(path, videos_path)
+                    moved += 1
+                elif get_file_extension(path, 3) == 'mp4':
+                    move_to(path, videos_path)
+                    moved += 1
+                elif get_file_extension(path, 3) == 'm4v':
+                    move_to(path, videos_path)
+                    moved += 1
+                elif get_file_extension(path, 3) == 'wmv':
+                    move_to(path, videos_path)
+                    moved += 1
+                # delete
+                elif get_file_extension(path, 3) == 'xmp':
+                    os.remove(path)
+                elif get_file_extension(path, 4) == 'json':
+                    os.remove(path)
+
+    # remove empty directories
+    for path in Path(input_path).rglob('*'):
+        path = str(path)
+        if os.path.isdir(path):
+            try:
+                os.rmdir(path)
+            except OSError:
+                # directiory not empty
+                pass
+
     after_message = ""
     if moved > 0 and len(after_command) > 0:
-        try:
-            subprocess.run(after_command).check_returncode()
-            after_message = after_command + " succeed"
-        except subprocess.CalledProcessError:
-            after_message = after_command + " failed"
-    message = str(moved) + " Photos moved from " + input_path + " to " + output_path + ", " + str(
-        trashed) + " trashed to " + trash_path
+        print("Calling " + after_command)
+        exit_status = subprocess.call(after_command.split(' '))
+        after_message = after_command + "exit status: " + exit_status
+    message = str(moved) + " Photos moved from " + input_path + " to " + output_path
     if len(after_message) > 0:
         message += "\n\t" + after_message
     save_log(message)
+
     delete_lock()
