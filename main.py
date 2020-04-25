@@ -14,9 +14,6 @@ videos_path = output_path + os.sep + "videos"
 no_time_data_path = output_path + os.sep + "no_time"
 log_path = str(Path.home())
 
-
-# TODO move .heic videos from no_time to .heic photo folder (video name = photo name +(1)
-
 def read_date(image_path):
     try:
         with open(image_path, 'rb') as file:
@@ -126,6 +123,7 @@ def get_file_name(path):
 def move_heic():
     # move heic movies to heic photos directories
     for path in Path(no_time_data_path).rglob('*.HEIC'):
+        path = str(path)
         old_path, file_name = os.path.split(path)
         name_without_extension = get_file_name(file_name)
         extension = get_file_extension(file_name)
@@ -148,11 +146,7 @@ def remove_empty_directiories():
                 pass
 
 
-if __name__ == '__main__':
-    input_path, output_path, after_command = get_arguments(sys.argv)
-
-    create_lock()
-
+def move_files():
     moved = 0
 
     for path in Path(input_path).rglob('*.*'):
@@ -205,6 +199,15 @@ if __name__ == '__main__':
                     os.remove(path)
                 elif get_file_extension(path)[1:] == 'json':
                     os.remove(path)
+    return moved
+
+
+if __name__ == '__main__':
+    input_path, output_path, after_command = get_arguments(sys.argv)
+
+    create_lock()
+
+    moved = move_files()
 
     remove_empty_directiories()
 
