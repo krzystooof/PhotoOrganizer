@@ -10,9 +10,12 @@ import datetime
 input_path = ""
 output_path = ""
 after_command = ""
+videos_path = output_path + os.sep + "videos"
+no_time_data_path = output_path + os.sep + "no_time"
 log_path = str(Path.home())
 
-#TODO move .heic videos from no_time to .heic photo folder (video name = photo name +(1)
+
+# TODO move .heic videos from no_time to .heic photo folder (video name = photo name +(1)
 
 def read_date(image_path):
     try:
@@ -120,6 +123,31 @@ def get_file_name(path):
     return os.path.splitext(path)[0]
 
 
+def move_heic():
+    # move heic movies to heic photos directories
+    for path in Path(no_time_data_path).rglob('*.HEIC'):
+        old_path, file_name = os.path.split(path)
+        name_without_extension = get_file_name(file_name)
+        extension = get_file_extension(file_name)
+        serached_name = name_without_extension[:-3]  # movies - <photo file name> + (1)
+        # search for file in other directiories, if found move file to this directory
+        searched_path = Path(input_path).rglob(serached_name + extension)
+        if len(searched_path) is 1:
+            searched_path, container = os.path.split(searched_path[0])
+            move_to(path, searched_path)
+
+
+def remove_empty_directiories():
+    for path in Path(input_path).rglob('*'):
+        path = str(path)
+        if os.path.isdir(path):
+            try:
+                os.rmdir(path)
+            except OSError:
+                # directiory not empty
+                pass
+
+
 if __name__ == '__main__':
     input_path, output_path, after_command = get_arguments(sys.argv)
 
@@ -136,8 +164,6 @@ if __name__ == '__main__':
                 move_to_output(path, date_taken)
                 moved += 1
             else:
-                videos_path = output_path + os.sep + "videos"
-                no_time_data_path = output_path + os.sep + "no_time"
 
                 # photos
                 if get_file_extension(path)[1:] == 'png':
@@ -180,15 +206,9 @@ if __name__ == '__main__':
                 elif get_file_extension(path)[1:] == 'json':
                     os.remove(path)
 
-    # remove empty directories
-    for path in Path(input_path).rglob('*'):
-        path = str(path)
-        if os.path.isdir(path):
-            try:
-                os.rmdir(path)
-            except OSError:
-                # directiory not empty
-                pass
+    remove_empty_directiories()
+
+    move_heic()
 
     after_message = ""
     if moved > 0 and len(after_command) > 0:
