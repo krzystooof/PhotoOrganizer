@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import exifread
@@ -66,7 +67,7 @@ def create_lock():
         save_log("Created lock")
     except FileExistsError:
         save_log("Output file locked - another process in progress")
-        quit()
+        quit(1)
 
 
 def delete_lock():
@@ -76,13 +77,24 @@ def delete_lock():
 
 
 def show_help(name):
-    print("Usage:")
-    print("\t" + name + "<photo input directory> <photo output directory> optionally: <'command to execute after "
-                        "organizing'>")
-    print("\t ex." + name + "Downloads/Wedding/ Photos/ '7z a backup/photos.zip Photos/*'")
+    print("Usage: " + name + " <photo input directory> <photo output directory> optionally: <'command to execute after "
+                             "organizing'>")
+    print("\tex." + name + " Downloads/Wedding/ Photos/ '7z a backup/photos.zip Photos/*'")
+
+
+def get_arguments(argvs):
+    if len(argvs) is 3:
+        return argvs[1], argvs[2], ""
+    elif len(argvs) is 4:
+        return argvs[1], argvs[2], argvs[3]
+    else:
+        show_help(argvs[0])
+        quit(2)
 
 
 if __name__ == '__main__':
+    input_path, output_path, after_command = get_arguments(sys.argv)
+
     create_lock(input_path)
     trashed = 0
     moved = 0
@@ -96,7 +108,7 @@ if __name__ == '__main__':
             move_to_trash(path)
             trashed += 1
     after_message = ""
-    if moved > 0 and len(after_command)>0:
+    if moved > 0 and len(after_command) > 0:
         try:
             subprocess.run(after_command).check_returncode()
             after_message = after_command + " succeed"
