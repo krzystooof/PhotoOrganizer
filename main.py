@@ -13,8 +13,6 @@ after_command = ""
 log_path = str(Path.home())
 
 
-# TODO add HEIC metadata extraction
-
 
 def read_date(image_path):
     try:
