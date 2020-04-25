@@ -12,7 +12,7 @@ output_path = ""
 after_command = ""
 log_path = str(Path.home())
 
-
+#TODO move .heic videos from no_time to .heic photo folder (video name = photo name +(1)
 
 def read_date(image_path):
     try:
@@ -39,8 +39,8 @@ def move(old_path, new_path, file_name):
     # do not overwrite - check if file exist
     output_file_name = file_name
     while check_file_exist(new_path, output_file_name):
-        extension = os.path.splitext(output_file_name)[1]
-        name = os.path.splitext(output_file_name)[0]
+        extension = get_file_extension(output_file_name)
+        name = get_file_name(output_file_name)
         name += "n"
         output_file_name = name + extension
     try:
@@ -111,9 +111,13 @@ def get_arguments(argvs):
         quit(2)
 
 
-def get_file_extension(path, letters):
-    extension = str(path[-(letters):]).lower()
+def get_file_extension(path):
+    extension = os.path.splitext(path)[1].lower()
     return str(extension)
+
+
+def get_file_name(path):
+    return os.path.splitext(path)[0]
 
 
 if __name__ == '__main__':
@@ -125,8 +129,7 @@ if __name__ == '__main__':
 
     for path in Path(input_path).rglob('*.*'):
         path = str(path)
-        extension = get_file_extension(path, 4)
-        if extension != 'lock':
+        if get_file_extension(path)[1:] != 'lock':
             date_taken = read_date(path)
             print(path + ": " + str(date_taken))
             if date_taken is not None:
@@ -137,41 +140,44 @@ if __name__ == '__main__':
                 no_time_data_path = output_path + os.sep + "no_time"
 
                 # photos
-                if get_file_extension(path, 3) == 'png':
+                if get_file_extension(path)[1:] == 'png':
                     move_to(path, no_time_data_path)
                     moved += 1
-                elif get_file_extension(path, 3) == 'jpg':
+                elif get_file_extension(path)[1:] == 'jpg':
                     move_to(path, no_time_data_path)
                     moved += 1
-                elif get_file_extension(path, 3) == 'gif':
+                elif get_file_extension(path)[1:] == 'gif':
                     move_to(path, no_time_data_path)
                     moved += 1
-                elif get_file_extension(path, 4) == 'jpeg':
+                elif get_file_extension(path)[1:] == 'jpeg':
                     move_to(path, no_time_data_path)
                     moved += 1
-                elif get_file_extension(path, 4) == 'heif':
+                elif get_file_extension(path)[1:] == 'heif':
                     move_to(path, no_time_data_path)
                     moved += 1
-                elif get_file_extension(path, 4) == 'heic':
+                elif get_file_extension(path)[1:] == 'heic':
                     move_to(path, no_time_data_path)
                     moved += 1
                 # videos
-                elif get_file_extension(path, 3) == 'mov':
+                elif get_file_extension(path)[1:] == 'mov':
                     move_to(path, videos_path)
                     moved += 1
-                elif get_file_extension(path, 3) == 'mp4':
+                elif get_file_extension(path)[1:] == 'mov':
                     move_to(path, videos_path)
                     moved += 1
-                elif get_file_extension(path, 3) == 'm4v':
+                elif get_file_extension(path)[1:] == 'mp4':
                     move_to(path, videos_path)
                     moved += 1
-                elif get_file_extension(path, 3) == 'wmv':
+                elif get_file_extension(path)[1:] == 'm4v':
+                    move_to(path, videos_path)
+                    moved += 1
+                elif get_file_extension(path)[1:] == 'wmv':
                     move_to(path, videos_path)
                     moved += 1
                 # delete
-                elif get_file_extension(path, 3) == 'xmp':
+                elif get_file_extension(path)[1:] == 'xmp':
                     os.remove(path)
-                elif get_file_extension(path, 4) == 'json':
+                elif get_file_extension(path)[1:] == 'json':
                     os.remove(path)
 
     # remove empty directories
