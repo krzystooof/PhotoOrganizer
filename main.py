@@ -1,4 +1,5 @@
 import os
+import subprocess
 from pathlib import Path
 
 import exifread
@@ -68,10 +69,21 @@ def create_lock():
         quit()
 
 
-if __name__ == '__main__':
-    # TODO get arguments and assign them
+def delete_lock():
+    lock_file_path = input_path + os.sep + "photo_organizer.lock"
+    os.remove(lock_file_path)
+    save_log("Deleted lock")
 
-    create_lock()
+
+def show_help(name):
+    print("Usage:")
+    print("\t" + name + "<photo input directory> <photo output directory> optionally: <'command to execute after "
+                        "organizing'>")
+    print("\t ex." + name + "Downloads/Wedding/ Photos/ '7z a backup/photos.zip Photos/*'")
+
+
+if __name__ == '__main__':
+    create_lock(input_path)
     trashed = 0
     moved = 0
     for path in Path(input_path).rglob('*.*'):
@@ -83,6 +95,16 @@ if __name__ == '__main__':
         else:
             move_to_trash(path)
             trashed += 1
-    # TODO execute after_command
-    # TODO send logs
-    # TODO delete lock
+    after_message = ""
+    if moved > 0 and len(after_command)>0:
+        try:
+            subprocess.run(after_command).check_returncode()
+            after_message = after_command + " succeed"
+        except subprocess.CalledProcessError:
+            after_message = after_command + " failed"
+    message = str(moved) + " Photos moved from " + input_path + " to " + output_path + ", " + str(
+        trashed) + " trashed to " + trash_path
+    if len(after_message) > 0:
+        message += "\n\t" + after_message
+    save_log(message)
+    delete_lock()
