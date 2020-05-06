@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import shutil
 import sys
@@ -201,6 +203,8 @@ def move_files():
 
 if __name__ == '__main__':
     input_path, output_path = get_arguments(sys.argv)
+    videos_path = output_path + os.sep + "videos"
+    no_time_data_path = output_path + os.sep + "no_time"
 
     create_lock()
 
