@@ -1,15 +1,13 @@
 import os
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 
 import exifread
 import datetime
 
-input_path = ""
-output_path = ""
-after_command = ""
+input_path = "/home/user/Pictures/test"
+output_path = "/home/user/Pictures/new"
 videos_path = output_path + os.sep + "videos"
 no_time_data_path = output_path + os.sep + "no_time"
 log_path = str(Path.home())
@@ -96,16 +94,13 @@ def delete_lock():
 
 
 def show_help(name):
-    print("Usage: " + name + " <photo input directory> <photo output directory> optionally: <'command to execute after "
-                             "organizing'>")
-    print("\tex." + name + " Downloads/Wedding/ Photos/ '7z a backup/photos.zip Photos/*'")
+    print("Usage: " + name + " <photo input directory> <photo output directory")
+    print("\tex." + name + " Downloads/Wedding/ Photos/")
 
 
 def get_arguments(argvs):
     if len(argvs) is 3:
-        return argvs[1], argvs[2], ""
-    elif len(argvs) is 4:
-        return argvs[1], argvs[2], argvs[3]
+        return argvs[1], argvs[2]
     else:
         show_help(argvs[0])
         quit(2)
@@ -126,10 +121,12 @@ def move_heic():
         path = str(path)
         old_path, file_name = os.path.split(path)
         name_without_extension = get_file_name(file_name)
-        extension = get_file_extension(file_name)
+        extension = get_file_extension(file_name).upper()
         serached_name = name_without_extension[:-3]  # movies - <photo file name> + (1)
         # search for file in other directiories, if found move file to this directory
-        searched_path = Path(input_path).rglob(serached_name + extension)
+        searched_path = []
+        for path2 in Path(output_path).rglob(serached_name + extension):
+            searched_path.append(str(path2))
         if len(searched_path) is 1:
             searched_path, container = os.path.split(searched_path[0])
             move_to(path, searched_path)
@@ -203,7 +200,7 @@ def move_files():
 
 
 if __name__ == '__main__':
-    input_path, output_path, after_command = get_arguments(sys.argv)
+    input_path, output_path = get_arguments(sys.argv)
 
     create_lock()
 
@@ -212,15 +209,5 @@ if __name__ == '__main__':
     remove_empty_directiories()
 
     move_heic()
-
-    after_message = ""
-    if moved > 0 and len(after_command) > 0:
-        print("Calling " + after_command)
-        exit_status = subprocess.call(after_command.split(' '))
-        after_message = after_command + "exit status: " + exit_status
-    message = str(moved) + " Photos moved from " + input_path + " to " + output_path
-    if len(after_message) > 0:
-        message += "\n\t" + after_message
-    save_log(message)
 
     delete_lock()
