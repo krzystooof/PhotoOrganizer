@@ -8,8 +8,8 @@ from pathlib import Path
 import exifread
 import datetime
 
-input_path = "/home/user/Pictures/test"
-output_path = "/home/user/Pictures/new"
+input_path = "/media/veracrypt3/photos_to_add/"
+output_path = "/media/veracrypt3/media/photos"
 videos_path = output_path + os.sep + "videos"
 no_time_data_path = output_path + os.sep + "no_time"
 log_path = str(Path.home())
@@ -193,18 +193,42 @@ def move_files():
                 elif get_file_extension(path)[1:] == 'wmv':
                     move_to(path, videos_path)
                     moved += 1
+                elif get_file_extension(path)[1:] == 'mpg':
+                    move_to(path, videos_path)
+                    moved += 1
+                elif get_file_extension(path)[1:] == 'avi':
+                    move_to(path, videos_path)
+                    moved += 1
                 # delete
                 elif get_file_extension(path)[1:] == 'xmp':
                     os.remove(path)
                 elif get_file_extension(path)[1:] == 'json':
                     os.remove(path)
+                elif get_file_extension(path)[1:] == 'info':
+                    os.remove(path)
+                elif get_file_extension(path)[1:] == 'db':
+                    os.remove(path)
+                elif get_file_extension(path)[1:] == 'lnk':
+                    os.remove(path)
+                elif get_file_extension(path)[1:] == 'xml':
+                    os.remove(path)
+                elif get_file_extension(path)[1:] == 'tmp':
+                    os.remove(path)
+                elif get_file_extension(path)[1:] == 'ini':
+                    os.remove(path)
+                elif get_file_extension(path)[1:] == 'xcf':
+                    os.remove(path)
+                elif get_file_extension(path)[1:] == 'mswmm':
+                    os.remove(path)
+                elif get_file_extension(path)[1:] == 'nri':
+                    os.remove(path)
     return moved
 
 
 if __name__ == '__main__':
-    input_path, output_path = get_arguments(sys.argv)
-    videos_path = output_path + os.sep + "videos"
-    no_time_data_path = output_path + os.sep + "no_time"
+    # input_path, output_path = get_arguments(sys.argv)
+    # videos_path = output_path + os.sep + "videos"
+    # no_time_data_path = output_path + os.sep + "no_time"
 
     create_lock()
 
