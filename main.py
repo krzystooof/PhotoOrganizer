@@ -4,12 +4,13 @@ import os
 import shutil
 import sys
 from pathlib import Path
+import time
 
 import exifread
 import datetime
 
-input_path = "/media/veracrypt3/photos_to_add/"
-output_path = "/media/veracrypt3/media/photos"
+input_path = ""
+output_path = ""
 videos_path = output_path + os.sep + "videos"
 no_time_data_path = output_path + os.sep + "no_time"
 log_path = str(Path.home())
@@ -226,16 +227,21 @@ def move_files():
 
 
 if __name__ == '__main__':
-    # input_path, output_path = get_arguments(sys.argv)
-    # videos_path = output_path + os.sep + "videos"
-    # no_time_data_path = output_path + os.sep + "no_time"
+    while True:
+        input_path, output_path = get_arguments(sys.argv)
+        videos_path = output_path + os.sep + "videos"
+        no_time_data_path = output_path + os.sep + "no_time"
 
-    create_lock()
+        create_lock()
 
-    moved = move_files()
+        moved = move_files()
 
-    remove_empty_directiories()
+        remove_empty_directiories()
 
-    move_heic()
+        move_heic()
 
-    delete_lock()
+        delete_lock()
+
+        time.sleep(60)
+
+        
