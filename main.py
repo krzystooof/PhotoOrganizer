@@ -97,7 +97,7 @@ def delete_lock():
 
 
 def show_help(name):
-    print("Usage: " + name + " <photo input directory> <photo output directory")
+    print("Usage: " + name + " <photo input directory> <photo output directory>")
     print("\tex." + name + " Downloads/Wedding/ Photos/")
 
 
@@ -229,6 +229,7 @@ def move_files():
 if __name__ == '__main__':
     while True:
         input_path, output_path = get_arguments(sys.argv)
+        print(str(time.asctime()) + " Starting. Input: " + input_path + ". Output: "+ output_path)
         videos_path = output_path + os.sep + "videos"
         no_time_data_path = output_path + os.sep + "no_time"
 
