@@ -15,6 +15,7 @@ videos_path = output_path + os.sep + "videos"
 no_time_data_path = output_path + os.sep + "no_time"
 log_path = str(Path.home())
 
+
 def read_date(image_path):
     try:
         with open(image_path, 'rb') as file:
@@ -96,18 +97,18 @@ def delete_lock():
     save_log("Deleted lock")
 
 
-def show_help(name):
-    print("Usage: " + name + " <photo input directory> <photo output directory>")
-    print("\tex." + name + " Downloads/Wedding/ Photos/")
+def show_help():
+    print("Mandatory arguments:")
+    print("-> -i <input directory> ")
+    print("-> -o <output directory>")
 
-
-def get_arguments(argvs):
-    if len(argvs) is 3:
-        return argvs[1], argvs[2]
-    else:
-        show_help(argvs[0])
-        quit(2)
-
+def get_argument(arg_prefix: str):
+    arguments = sys.argv
+    for index, arg in enumerate(arguments):
+        if arg_prefix == arg:
+            arg_value = arguments[index + 1]
+            return arg_value
+    raise ValueError("No argument with selected prefix")
 
 def get_file_extension(path):
     extension = os.path.splitext(path)[1].lower()
@@ -130,7 +131,7 @@ def move_heic():
         searched_path = []
         for path2 in Path(output_path).rglob(serached_name + extension):
             searched_path.append(str(path2))
-        if len(searched_path) is 1:
+        if len(searched_path) == 1:
             searched_path, container = os.path.split(searched_path[0])
             move_to(path, searched_path)
 
@@ -158,7 +159,6 @@ def move_files():
                 move_to_output(path, date_taken)
                 moved += 1
             else:
-
                 # photos
                 if get_file_extension(path)[1:] == 'png':
                     move_to(path, no_time_data_path)
@@ -227,11 +227,20 @@ def move_files():
 
 
 if __name__ == '__main__':
+    try:
+        input_path = get_argument("-i")
+    except ValueError:
+        print("PLEASE SPECIFY INPUT DIRECTORY")
+        show_help()
+    try:
+        output_path = get_argument("-o")
+    except ValueError:
+        print("PLEASE SPECIFY OUTPUT DIRECTORY")
+        show_help()
+    videos_path = output_path + os.sep + "videos"
+    no_time_data_path = output_path + os.sep + "no_time"
     while True:
-        input_path, output_path = get_arguments(sys.argv)
-        print(str(time.asctime()) + " Starting. Input: " + input_path + ". Output: "+ output_path)
-        videos_path = output_path + os.sep + "videos"
-        no_time_data_path = output_path + os.sep + "no_time"
+        print(str(time.asctime()) + " Starting. Input: " + input_path + ". Output: " + output_path)
 
         create_lock()
 
@@ -244,5 +253,3 @@ if __name__ == '__main__':
         delete_lock()
 
         time.sleep(60)
-
-        

@@ -27,4 +27,9 @@ Moreover if you are using `live` option - after capturing there are two files cr
 - `photo` with some name (ex. `IMG_001.HEIC`)
 - `video` with name same as `photo` but ending with `(1)` (ex. `IMG_001(1).HEIC`)
 
-The script cannot read EXIF info from `video`, but after moving it will look for localization of photos for every `HEIC` `video`. If it can find it, script will move `video` to `photo` folder. 
+The script cannot read EXIF info from `video`, but after moving it will look for localization of photos for every `HEIC` `video`. If it can find it, script will move `video` to `photo` folder.
+
+## Arguments:
+### Mandatory:
+* `-i <input directory>` directory where PhotoOrganizer will operate
+* `-o <output directory>` directory where results in given folder structure will be created
