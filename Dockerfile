@@ -11,4 +11,6 @@ VOLUME /input
 RUN mkdir -p /output
 VOLUME /output
 
-ENTRYPOINT [ "python", "/main.py", "/input","/output" ]
+ENV PYTHONUNBUFFERED=0
+
+ENTRYPOINT [ "python", "-u", "/main.py", "/input","/output" ]
