@@ -55,14 +55,14 @@ def check_file_exist(path, file_name):
         return False
 
 
-def move(old_path, new_path, file_name):
-    # do not overwrite - check if file exist
-    output_file_name = file_name
-    while check_file_exist(new_path, output_file_name):
-        extension = get_file_extension(output_file_name)
-        name = get_file_name(output_file_name)
-        name += "n"
-        output_file_name = name + extension
+def move(old_path, new_path, file_name,overwrite):
+    if not overwrite:
+        output_file_name = file_name
+        while check_file_exist(new_path, output_file_name):
+            extension = get_file_extension(output_file_name)
+            name = get_file_name(output_file_name)
+            name += "n"
+            output_file_name = name + extension
     try:
         shutil.move(old_path + os.sep + file_name, new_path + os.sep + output_file_name)
     except FileNotFoundError:
@@ -71,7 +71,7 @@ def move(old_path, new_path, file_name):
         move(old_path, new_path, file_name)
 
 
-def move_to_output(image_path: str, date_taken: str, folder_structure: FolderStructure,flat:bool):
+def move_to_output(image_path: str, date_taken: str, folder_structure: FolderStructure,flat:bool,overwrite):
     splitted_date = date_taken.split(':')
     year = splitted_date[0]
     month = splitted_date[1]
@@ -90,13 +90,13 @@ def move_to_output(image_path: str, date_taken: str, folder_structure: FolderStr
     if flat:
         new_path.replace("/", "-")
         new_path.replace("\\", "-")
-    move(old_path, new_path, file_name)
+    move(old_path, new_path, file_name,overwrite)
 
 
-def move_to(file_path, new_path):
+def move_to(file_path, new_path,overwrite):
     old_path, file_name = os.path.split(file_path)
 
-    move(old_path, new_path, file_name)
+    move(old_path, new_path, file_name,overwrite)
 
 
 def save_log(message):
@@ -136,6 +136,13 @@ def show_help():
     print("-> --notime (move to default videos directory) or --notime <directory> (move to specified directory)")
     print("* files that are not photos or videos moving and selecting directory or removing:")
     print("-> --trash (remove from filesystem) or --trash <directory> (move to specified directory)")
+    print("* select folder structure:")
+    print("-> --structure <folder_structure> (YYYY_MM_DD or YYYY or DD_MM_YYYY and so on)")
+    print("* flat folder structure:")
+    print("-> --flat")
+    print("* overwriting files with identical name in the catalog:")
+    print("-> --overwrite")
+
     quit(2)
 
 
@@ -159,7 +166,7 @@ def get_file_name(path):
     return os.path.splitext(path)[0]
 
 
-def move_heic():
+def move_heic(overwrite):
     # move heic movies to heic photos directories
     for path in Path(no_time_data_path).rglob('*.HEIC'):
         path = str(path)
@@ -173,7 +180,7 @@ def move_heic():
             searched_path.append(str(path2))
         if len(searched_path) == 1:
             searched_path, container = os.path.split(searched_path[0])
-            move_to(path, searched_path)
+            move_to(path, searched_path,overwrite)
 
 
 def remove_empty_directories():
@@ -216,7 +223,7 @@ def get_file_type(extension: str):
         return FileType.TRASH
 
 
-def move_files(videos_path:str, no_time_data_path:str, trash_path:str,folder_structure,flat):
+def move_files(videos_path:str, no_time_data_path:str, trash_path:str,folder_structure,flat,overwrite):
     moved = 0
     for path in Path(input_path).rglob('*.*'):
         path = str(path)
@@ -224,17 +231,17 @@ def move_files(videos_path:str, no_time_data_path:str, trash_path:str,folder_str
             date_taken = read_date(path)
             print(path + ": " + str(date_taken))
             if date_taken is not None:
-                move_to_output(path, date_taken,folder_structure,flat)
+                move_to_output(path, date_taken,folder_structure,flat,overwrite)
                 moved += 1
             else:
                 extension = get_file_extension(path)[1:]
                 if get_file_type(extension) == FileType.PHOTO:
                     if no_time_data_path is not None:
-                        move_to(path, no_time_data_path)
+                        move_to(path, no_time_data_path,overwrite)
                         moved += 1
                 elif get_file_type(extension) == FileType.VIDEO:
                     if videos_path is not None:
-                        move_to(path, videos_path)
+                        move_to(path, videos_path,overwrite)
                         moved += 1
                 elif get_file_type(extension) == FileType.TRASH:
                     if trash_path == "nopath":
@@ -289,16 +296,21 @@ if __name__ == '__main__':
         flat = True
     except ValueError:
         flat = False
+    try:
+        get_argument("--overwrite")
+        overwrite = True
+    except ValueError:
+        overwrite = False
     while True:
         print(str(time.asctime()) + " Starting. Input: " + input_path + ". Output: " + output_path)
 
         create_lock()
 
-        moved = move_files(videos_path, no_time_data_path, trash_path,folder_structure,flat)
+        moved = move_files(videos_path, no_time_data_path, trash_path,folder_structure,flat,overwrite)
 
         remove_empty_directories()
 
-        move_heic()
+        move_heic(overwrite)
 
         delete_lock()
 
