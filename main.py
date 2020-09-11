@@ -142,6 +142,8 @@ def show_help():
     print("-> --flat")
     print("* overwriting files with identical name in the catalog:")
     print("-> --overwrite")
+    print("* select wait time:")
+    print("-> --wait <time in seconds>")
 
     quit(2)
 
@@ -301,6 +303,13 @@ if __name__ == '__main__':
         overwrite = True
     except ValueError:
         overwrite = False
+    try:
+        wait_time = get_argument("--wait")
+        if wait_time is None:
+            print("PLEASE SPECIFY WAIT TIME")
+            show_help()
+    except ValueError:
+        wait_time = 60
     while True:
         print(str(time.asctime()) + " Starting. Input: " + input_path + ". Output: " + output_path)
 
@@ -314,4 +323,4 @@ if __name__ == '__main__':
 
         delete_lock()
 
-        time.sleep(60)
+        time.sleep(wait_time)
