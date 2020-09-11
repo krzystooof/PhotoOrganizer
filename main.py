@@ -16,12 +16,22 @@ class FileType(Enum):
     VIDEO = 2
     PHOTO = 3
 
+class FolderStructure(Enum):
+    YYYY = 1
+    YYYY_MM = 2
+    YYYY_MM_DD = 3
+    MM = 5
+    MM_DD = 6
+    DD = 7
+    DD_MM = 8
+    YYYY_DD_MM =9
+    DD_MM_YYYY=10
+    MM_DD_YYYY=11
 
-input_path = ""
-output_path = ""
-videos_path = output_path + os.sep + "videos"
-no_time_data_path = output_path + os.sep + "no_time"
-log_path = str(Path.home())
+    @classmethod
+    def exists(cls, name):
+        return name in FolderStructure.__members__
+
 
 
 def read_date(image_path):
@@ -61,15 +71,22 @@ def move(old_path, new_path, file_name):
         move(old_path, new_path, file_name)
 
 
-def move_to_output(image_path, date_taken):
+def move_to_output(image_path: str, date_taken: str, folder_structure: FolderStructure):
     splitted_date = date_taken.split(':')
     year = splitted_date[0]
     month = splitted_date[1]
     day = splitted_date[2][:2]
 
     old_path, file_name = os.path.split(image_path)
-
-    new_path = output_path + os.sep + year + os.sep + month + os.sep + day
+    structure = str(folder_structure.name).split("_")
+    new_path = output_path
+    for item in structure:
+        if item == "YYYY":
+            new_path += os.sep + year
+        elif item == "MM":
+            new_path += os.sep + month
+        elif item == "DD":
+            new_path += os.sep + day
     move(old_path, new_path, file_name)
 
 
@@ -196,7 +213,7 @@ def get_file_type(extension: str):
         return FileType.TRASH
 
 
-def move_files(videos_path:str, no_time_data_path:str, trash_path:str):
+def move_files(videos_path:str, no_time_data_path:str, trash_path:str,folder_structure):
     moved = 0
     for path in Path(input_path).rglob('*.*'):
         path = str(path)
@@ -204,7 +221,7 @@ def move_files(videos_path:str, no_time_data_path:str, trash_path:str):
             date_taken = read_date(path)
             print(path + ": " + str(date_taken))
             if date_taken is not None:
-                move_to_output(path, date_taken)
+                move_to_output(path, date_taken,folder_structure)
                 moved += 1
             else:
                 extension = get_file_extension(path)[1:]
@@ -227,6 +244,7 @@ def move_files(videos_path:str, no_time_data_path:str, trash_path:str):
 
 
 if __name__ == '__main__':
+    log_path = str(Path.home())
     try:
         input_path = get_argument("-i")
     except ValueError:
@@ -255,12 +273,20 @@ if __name__ == '__main__':
             trash_path = "nopath"
     except ValueError:
         trash_path = None
+    try:
+        folder_structure = get_argument("--structure")
+        if folder_structure is None or not FolderStructure.exists(folder_structure):
+            print("FOLDER STRUCTURE SHOULD BE ONE OF:")
+            print(list(FolderStructure))
+            show_help()
+    except ValueError:
+        folder_structure = FolderStructure.YYYY_MM_DD
     while True:
         print(str(time.asctime()) + " Starting. Input: " + input_path + ". Output: " + output_path)
 
         create_lock()
 
-        moved = move_files(videos_path, no_time_data_path, trash_path)
+        moved = move_files(videos_path, no_time_data_path, trash_path,folder_structure)
 
         remove_empty_directories()
 
