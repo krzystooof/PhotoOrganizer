@@ -71,7 +71,7 @@ def move(old_path, new_path, file_name):
         move(old_path, new_path, file_name)
 
 
-def move_to_output(image_path: str, date_taken: str, folder_structure: FolderStructure):
+def move_to_output(image_path: str, date_taken: str, folder_structure: FolderStructure,flat:bool):
     splitted_date = date_taken.split(':')
     year = splitted_date[0]
     month = splitted_date[1]
@@ -87,6 +87,9 @@ def move_to_output(image_path: str, date_taken: str, folder_structure: FolderStr
             new_path += os.sep + month
         elif item == "DD":
             new_path += os.sep + day
+    if flat:
+        new_path.replace("/", "-")
+        new_path.replace("\\", "-")
     move(old_path, new_path, file_name)
 
 
@@ -213,7 +216,7 @@ def get_file_type(extension: str):
         return FileType.TRASH
 
 
-def move_files(videos_path:str, no_time_data_path:str, trash_path:str,folder_structure):
+def move_files(videos_path:str, no_time_data_path:str, trash_path:str,folder_structure,flat):
     moved = 0
     for path in Path(input_path).rglob('*.*'):
         path = str(path)
@@ -221,7 +224,7 @@ def move_files(videos_path:str, no_time_data_path:str, trash_path:str,folder_str
             date_taken = read_date(path)
             print(path + ": " + str(date_taken))
             if date_taken is not None:
-                move_to_output(path, date_taken,folder_structure)
+                move_to_output(path, date_taken,folder_structure,flat)
                 moved += 1
             else:
                 extension = get_file_extension(path)[1:]
@@ -281,12 +284,17 @@ if __name__ == '__main__':
             show_help()
     except ValueError:
         folder_structure = FolderStructure.YYYY_MM_DD
+    try:
+        get_argument("--flat")
+        flat = True
+    except ValueError:
+        flat = False
     while True:
         print(str(time.asctime()) + " Starting. Input: " + input_path + ". Output: " + output_path)
 
         create_lock()
 
-        moved = move_files(videos_path, no_time_data_path, trash_path,folder_structure)
+        moved = move_files(videos_path, no_time_data_path, trash_path,folder_structure,flat)
 
         remove_empty_directories()
 
