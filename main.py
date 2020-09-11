@@ -8,6 +8,14 @@ import time
 
 import exifread
 import datetime
+from enum import Enum
+
+
+class FileType(Enum):
+    TRASH = 1
+    VIDEO = 2
+    PHOTO = 3
+
 
 input_path = ""
 output_path = ""
@@ -101,14 +109,26 @@ def show_help():
     print("Mandatory arguments:")
     print("-> -i <input directory> ")
     print("-> -o <output directory>")
+    print("Optional arguments:")
+    print("* videos moving and selecting directory:")
+    print("-> --videos (move to default videos directory) or --videos <directory> (move to specified directory)")
+    print("* photos without date taken moving and selecting directory:")
+    print("-> --notime (move to default videos directory) or --notime <directory> (move to specified directory)")
+    print("* files that are not photos or videos moving and selecting directory or removing:")
+    print("-> --trash (remove from filesystem) or --trash <directory> (move to specified directory)")
+    quit(2)
+
 
 def get_argument(arg_prefix: str):
     arguments = sys.argv
     for index, arg in enumerate(arguments):
         if arg_prefix == arg:
             arg_value = arguments[index + 1]
+            if arg_value[0] == "-":
+                return None
             return arg_value
     raise ValueError("No argument with selected prefix")
+
 
 def get_file_extension(path):
     extension = os.path.splitext(path)[1].lower()
@@ -136,7 +156,7 @@ def move_heic():
             move_to(path, searched_path)
 
 
-def remove_empty_directiories():
+def remove_empty_directories():
     for path in Path(input_path).rglob('*'):
         path = str(path)
         if os.path.isdir(path):
@@ -147,9 +167,37 @@ def remove_empty_directiories():
                 pass
 
 
-def move_files():
-    moved = 0
+def get_file_type(extension: str):
+    if extension == 'png' or \
+            extension == 'jpg' or \
+            extension == 'gif' or \
+            extension == 'jpeg' or \
+            extension == 'heif' or \
+            extension == 'heic':
+        return FileType.PHOTO
+    elif extension == 'mov' or \
+            extension == 'mp4' or \
+            extension == 'm4v' or \
+            extension == 'wmv' or \
+            extension == 'mpg' or \
+            extension == 'avi':
+        return FileType.VIDEO
+    elif extension == 'xmp' or \
+            extension == 'json' or \
+            extension == 'info' or \
+            extension == 'db' or \
+            extension == 'lnk' or \
+            extension == 'xml' or \
+            extension == 'tmp' or \
+            extension == 'ini' or \
+            extension == 'xcf' or \
+            extension == 'nri' or \
+            extension == 'mswmm':
+        return FileType.TRASH
 
+
+def move_files(videos_path:str, no_time_data_path:str, trash_path:str):
+    moved = 0
     for path in Path(input_path).rglob('*.*'):
         path = str(path)
         if get_file_extension(path)[1:] != 'lock':
@@ -159,70 +207,22 @@ def move_files():
                 move_to_output(path, date_taken)
                 moved += 1
             else:
-                # photos
-                if get_file_extension(path)[1:] == 'png':
-                    move_to(path, no_time_data_path)
-                    moved += 1
-                elif get_file_extension(path)[1:] == 'jpg':
-                    move_to(path, no_time_data_path)
-                    moved += 1
-                elif get_file_extension(path)[1:] == 'gif':
-                    move_to(path, no_time_data_path)
-                    moved += 1
-                elif get_file_extension(path)[1:] == 'jpeg':
-                    move_to(path, no_time_data_path)
-                    moved += 1
-                elif get_file_extension(path)[1:] == 'heif':
-                    move_to(path, no_time_data_path)
-                    moved += 1
-                elif get_file_extension(path)[1:] == 'heic':
-                    move_to(path, no_time_data_path)
-                    moved += 1
-                # videos
-                elif get_file_extension(path)[1:] == 'mov':
-                    move_to(path, videos_path)
-                    moved += 1
-                elif get_file_extension(path)[1:] == 'mov':
-                    move_to(path, videos_path)
-                    moved += 1
-                elif get_file_extension(path)[1:] == 'mp4':
-                    move_to(path, videos_path)
-                    moved += 1
-                elif get_file_extension(path)[1:] == 'm4v':
-                    move_to(path, videos_path)
-                    moved += 1
-                elif get_file_extension(path)[1:] == 'wmv':
-                    move_to(path, videos_path)
-                    moved += 1
-                elif get_file_extension(path)[1:] == 'mpg':
-                    move_to(path, videos_path)
-                    moved += 1
-                elif get_file_extension(path)[1:] == 'avi':
-                    move_to(path, videos_path)
-                    moved += 1
-                # delete
-                elif get_file_extension(path)[1:] == 'xmp':
-                    os.remove(path)
-                elif get_file_extension(path)[1:] == 'json':
-                    os.remove(path)
-                elif get_file_extension(path)[1:] == 'info':
-                    os.remove(path)
-                elif get_file_extension(path)[1:] == 'db':
-                    os.remove(path)
-                elif get_file_extension(path)[1:] == 'lnk':
-                    os.remove(path)
-                elif get_file_extension(path)[1:] == 'xml':
-                    os.remove(path)
-                elif get_file_extension(path)[1:] == 'tmp':
-                    os.remove(path)
-                elif get_file_extension(path)[1:] == 'ini':
-                    os.remove(path)
-                elif get_file_extension(path)[1:] == 'xcf':
-                    os.remove(path)
-                elif get_file_extension(path)[1:] == 'mswmm':
-                    os.remove(path)
-                elif get_file_extension(path)[1:] == 'nri':
-                    os.remove(path)
+                extension = get_file_extension(path)[1:]
+                if get_file_type(extension) == FileType.PHOTO:
+                    if no_time_data_path is not None:
+                        move_to(path, no_time_data_path)
+                        moved += 1
+                elif get_file_type(extension) == FileType.VIDEO:
+                    if videos_path is not None:
+                        move_to(path, videos_path)
+                        moved += 1
+                elif get_file_type(extension) == FileType.TRASH:
+                    if trash_path == "nopath":
+                        os.remove(path)
+                    elif trash_path is None:
+                        pass
+                    else:
+                        move_to(path, videos_path)
     return moved
 
 
@@ -237,16 +237,32 @@ if __name__ == '__main__':
     except ValueError:
         print("PLEASE SPECIFY OUTPUT DIRECTORY")
         show_help()
-    videos_path = output_path + os.sep + "videos"
-    no_time_data_path = output_path + os.sep + "no_time"
+    try:
+        videos_path = get_argument("--videos")
+        if videos_path is None:
+            videos_path = output_path + os.sep + "videos"
+    except ValueError:
+        videos_path = None
+    try:
+        no_time_data_path = get_argument("--notime")
+        if no_time_data_path is None:
+            no_time_data_path = output_path + os.sep + "no_time"
+    except ValueError:
+        no_time_data_path = None
+    try:
+        trash_path = get_argument("--trash")
+        if trash_path is None:
+            trash_path = "nopath"
+    except ValueError:
+        trash_path = None
     while True:
         print(str(time.asctime()) + " Starting. Input: " + input_path + ". Output: " + output_path)
 
         create_lock()
 
-        moved = move_files()
+        moved = move_files(videos_path, no_time_data_path, trash_path)
 
-        remove_empty_directiories()
+        remove_empty_directories()
 
         move_heic()
 
